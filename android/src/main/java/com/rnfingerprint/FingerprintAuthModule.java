@@ -25,8 +25,6 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
     public static final int FINGERPRINT_CANCELLED_BY_USER = 101;
     private static final String FRAGMENT_TAG = "fingerprint_dialog";
 
-    private FingerprintManager.CryptoObject cryptoObject;
-    private FingerprintManager fingerprintManager;
     private KeyguardManager keyguardManager;
     private boolean isAppActive;
 
@@ -38,33 +36,6 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
         super(reactContext);
 
         reactContext.addLifecycleEventListener(this);
-    }
-
-    @TargetApi(Build.VERSION_CODES.M)
-    private FingerprintManager.CryptoObject getCryptoObject() {
-        if (cryptoObject != null) {
-            return cryptoObject;
-        }
-
-        final Cipher cipher = new FingerprintCipher().getCipher();
-        cryptoObject = new FingerprintManager.CryptoObject(cipher);
-
-        return cryptoObject;
-    }
-
-    @TargetApi(Build.VERSION_CODES.M)
-    private FingerprintManager getFingerprintManager() {
-        if (fingerprintManager != null) {
-            return fingerprintManager;
-        }
-
-        final Activity activity = getCurrentActivity();
-        if (activity == null) {
-            return null;
-        }
-        fingerprintManager = (FingerprintManager) activity.getSystemService(Context.FINGERPRINT_SERVICE);
-
-        return fingerprintManager;
     }
 
     private KeyguardManager getKeyguardManager() {
@@ -117,6 +88,7 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
     @ReactMethod
     public void authenticate(final String reason, final ReadableMap authConfig, final Callback reactErrorCallback, final Callback reactSuccessCallback) {
         final Activity activity = getCurrentActivity();
@@ -131,15 +103,21 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
             return;
         }
 
-        final FingerprintManager.CryptoObject cryptoObject = this.getCryptoObject();
-        if (cryptoObject == null) {
+        /* FINGERPRINT ACTIVITY RELATED STUFF */
+        final Cipher cipher = new FingerprintCipher().getCipher();
+        if (cipher == null) {
             inProgress = false;
             reactErrorCallback.invoke("Not supported");
             return;
         }
 
-        /* FINGERPRINT ACTIVITY RELATED STUFF */
+        // We should call it only when we absolutely sure that API >= 23.
+        // Otherwise we will get the crash on older versions.
+        // TODO: migrate to FingerprintManagerCompat
+        final FingerprintManager.CryptoObject cryptoObject = new FingerprintManager.CryptoObject(cipher);
+
         final DialogResultHandler drh = new DialogResultHandler(reactErrorCallback, reactSuccessCallback);
+
         final FingerprintDialog fingerprintDialog = new FingerprintDialog();
         fingerprintDialog.setCryptoObject(cryptoObject);
         fingerprintDialog.setReasonForAuthentication(reason);
@@ -159,8 +137,17 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
             return false;
         }
 
+        final Activity activity = getCurrentActivity();
+        if (activity == null) {
+            return false; // we can't do the check
+        }
+
         final KeyguardManager keyguardManager = getKeyguardManager();
-        final FingerprintManager fingerprintManager = getFingerprintManager();
+
+        // We should call it only when we absolutely sure that API >= 23.
+        // Otherwise we will get the crash on older versions.
+        // TODO: migrate to FingerprintManagerCompat
+        final FingerprintManager fingerprintManager = (FingerprintManager) activity.getSystemService(Context.FINGERPRINT_SERVICE);
 
         if (keyguardManager == null || !keyguardManager.isKeyguardSecure()) {
             return false;
