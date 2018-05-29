@@ -28,7 +28,8 @@ public class FingerprintDialog extends DialogFragment implements FingerprintHand
     private boolean isAuthInProgress;
 
     private String authReason;
-    private ReadableMap authConfig;
+    private int dialogColor = 0;
+    private String dialogTitle = "";
     private View shakyView;
     private Animation shakyAnim;
 
@@ -38,14 +39,13 @@ public class FingerprintDialog extends DialogFragment implements FingerprintHand
         super.onAttach(context);
         this.context = context;
 
-        mFingerprintHandler = new FingerprintHandler(context, this);
+        this.mFingerprintHandler = new FingerprintHandler(context, this);
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Material_Light_Dialog);
-
         setCancelable(false);
     }
 
@@ -56,26 +56,30 @@ public class FingerprintDialog extends DialogFragment implements FingerprintHand
         this.shakyAnim = AnimationUtils.loadAnimation(context, R.anim.shake);
 
         final TextView mFingerprintDescription = (TextView) v.findViewById(R.id.fingerprint_description);
-        mFingerprintDescription.setText(authReason);
+        mFingerprintDescription.setText(this.authReason);
         if (authReason == null) {
             mFingerprintDescription.setVisibility(View.GONE);
         }
 
-        final int color = authConfig.getInt("color");
         final ImageView mFingerprintImage = (ImageView) v.findViewById(R.id.fingerprint_icon);
-        mFingerprintImage.setColorFilter(color);
+        if (this.dialogColor != 0) {
+            mFingerprintImage.setColorFilter(this.dialogColor);
+        }
         this.shakyView = mFingerprintImage;
 
+
         final Button mCancelButton = (Button) v.findViewById(R.id.cancel_button);
-        mCancelButton.setTextColor(color);
         mCancelButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 onCancelled();
             }
         });
+        if (this.dialogColor != 0) {
+            mCancelButton.setTextColor(this.dialogColor);
+        }
 
-        getDialog().setTitle(authConfig.getString("title"));
+        getDialog().setTitle(this.dialogTitle);
         getDialog().setOnKeyListener(new DialogInterface.OnKeyListener() {
             public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
                 if (keyCode != KeyEvent.KEYCODE_BACK || mFingerprintHandler == null) {
@@ -94,36 +98,46 @@ public class FingerprintDialog extends DialogFragment implements FingerprintHand
     public void onResume() {
         super.onResume();
 
-        if (isAuthInProgress) {
+        if (this.isAuthInProgress) {
             return;
         }
 
-        isAuthInProgress = true;
-        mFingerprintHandler.startAuth(mCryptoObject);
+        this.isAuthInProgress = true;
+        this.mFingerprintHandler.startAuth(mCryptoObject);
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
 
-        mFingerprintHandler.endAuth();
+        this.mFingerprintHandler.endAuth();
     }
 
 
     public void setCryptoObject(FingerprintManager.CryptoObject cryptoObject) {
-        mCryptoObject = cryptoObject;
+        this.mCryptoObject = cryptoObject;
     }
 
     public void setDialogCallback(DialogResultListener newDialogCallback) {
-        dialogCallback = newDialogCallback;
+        this.dialogCallback = newDialogCallback;
     }
 
     public void setReasonForAuthentication(String reason) {
-        authReason = reason;
+        this.authReason = reason;
     }
 
-    public void setAuthConfig(ReadableMap config) {
-        authConfig = config;
+    public void setAuthConfig(final ReadableMap config) {
+        if (config == null) {
+            return;
+        }
+
+        if (config.hasKey("title")) {
+            this.dialogTitle = config.getString("title");
+        }
+
+        if (config.hasKey("color")) {
+            this.dialogColor = config.getInt("color");
+        }
     }
 
     public interface DialogResultListener {
@@ -136,16 +150,14 @@ public class FingerprintDialog extends DialogFragment implements FingerprintHand
 
     @Override
     public void onAuthenticated() {
-        isAuthInProgress = false;
-        mFingerprintHandler.endAuth();
-        dialogCallback.onAuthenticated();
+        this.isAuthInProgress = false;
+        this.dialogCallback.onAuthenticated();
         dismiss();
     }
 
     @Override
     public void onError(int errorCode, String errorString) {
-        isAuthInProgress = false;
-        mFingerprintHandler.endAuth();
+        this.isAuthInProgress = false;
 
         dialogCallback.onError(errorCode, errorString);
         dismiss();
@@ -158,9 +170,9 @@ public class FingerprintDialog extends DialogFragment implements FingerprintHand
 
     @Override
     public void onCancelled() {
-        isAuthInProgress = false;
-        mFingerprintHandler.endAuth();
-        dialogCallback.onCancelled();
+        this.isAuthInProgress = false;
+        this.mFingerprintHandler.endAuth();
+        this.dialogCallback.onCancelled();
         dismiss();
     }
 }
