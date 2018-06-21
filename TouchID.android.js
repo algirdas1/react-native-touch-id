@@ -31,7 +31,8 @@ export default {
         authReason,
         authConfig,
         (errorCode, errorMessage) => {
-          reject(createError({ code: errorCode, message: errorMessage }));
+          console.log('error', errorCode, errorMessage);
+          return reject(typeof error == 'String' ? createError(errorMessage, errorMessage) : createError(errorMessage));
         },
         success => {
           resolve(true);
