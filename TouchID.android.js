@@ -2,21 +2,23 @@ import { NativeModules, processColor } from 'react-native';
 const NativeTouchID = NativeModules.FingerprintAuth;
 // Android provides more flexibility than iOS for handling the Fingerprint. Currently the config object accepts customizable title or color. Otherwise it defaults to this constant
 
+const { isSupported, authenticate, ...errors } = NativeTouchID;
+
 export default {
-  isSupported() {
+  ...errors,
+  isSupported: () => {
     return new Promise((resolve, reject) => {
       NativeTouchID.isSupported(
         error => {
-          return reject(typeof error == 'String' ? createError(error, error) : createError(error));
+          return resolve({ supported: false, biometryType: 'TouchID' });
         },
         success => {
-          return resolve(true);
+          return resolve({ supported: true, biometryType: 'TouchID' });
         }
       );
     });
   },
-
-  authenticate(reason, config) {
+  authenticate: (reason, config) => {
     DEFAULT_CONFIG = { title: 'Authentication Required', color: '#0264a6' };
     var authReason = reason ? reason : ' ';
     var authConfig = Object.assign({}, DEFAULT_CONFIG, config);
@@ -29,8 +31,7 @@ export default {
         authReason,
         authConfig,
         (errorCode, errorMessage) => {
-          console.log('error', errorCode, errorMessage);
-          return reject(typeof error == 'String' ? createError(errorMessage, errorMessage) : createError(errorMessage));
+          return reject(createError({ code: errorCode, message: errorMessage }));
         },
         success => {
           return resolve(true);
@@ -43,6 +44,7 @@ export default {
 function TouchIDError(name, details) {
   this.name = name || 'TouchIDError';
   this.message = details.message || 'Touch ID Error';
+  this.code = details.code;
   this.details = details || {};
 }
 

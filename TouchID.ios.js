@@ -13,7 +13,7 @@ const ERRORS = require('./data/errors');
  */
 
 export default {
-  isSupported() {
+  isSupported: () => {
     return new Promise((resolve, reject) => {
       NativeTouchID.isSupported((error, biometryType) => {
         if (error) {
@@ -25,7 +25,7 @@ export default {
     });
   },
 
-  authenticate(reason, config) {
+  authenticate: (reason, config) => {
     const DEFAULT_CONFIG = { fallbackLabel: null };
     const authReason = reason ? reason : ' ';
     const authConfig = config ? config : DEFAULT_CONFIG;
