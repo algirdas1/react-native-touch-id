@@ -5,6 +5,7 @@ import android.hardware.fingerprint.FingerprintManager;
 import android.os.Build;
 import android.content.Context;
 import android.os.CancellationSignal;
+import android.util.Log;
 
 @TargetApi(Build.VERSION_CODES.M)
 public class FingerprintHandler extends FingerprintManager.AuthenticationCallback {
@@ -34,20 +35,18 @@ public class FingerprintHandler extends FingerprintManager.AuthenticationCallbac
     public void onAuthenticationError(int errMsgId,
                                       CharSequence errString) {
         if (!selfCancelled) {
-            mCallback.onError(errString.toString());
+            mCallback.onError(errMsgId, errString.toString());
         }
     }
 
     @Override
     public void onAuthenticationFailed() {
-        mCallback.onError("failed");
-        cancelAuthenticationSignal();
+        mCallback.onFailed();
     }
 
     @Override
     public void onAuthenticationSucceeded(FingerprintManager.AuthenticationResult result) {
         mCallback.onAuthenticated();
-        cancelAuthenticationSignal();
     }
 
     private void cancelAuthenticationSignal() {
@@ -61,8 +60,10 @@ public class FingerprintHandler extends FingerprintManager.AuthenticationCallbac
     public interface Callback {
         void onAuthenticated();
 
-        void onError(String errorString);
+        void onError(int errorCode, String errorString);
 
         void onCancelled();
+
+        void onFailed();
     }
 }

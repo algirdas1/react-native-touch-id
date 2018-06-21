@@ -9,11 +9,16 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.facebook.react.bridge.ReadableMap;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class FingerprintDialog extends DialogFragment implements FingerprintHandler.Callback {
 
@@ -24,10 +29,14 @@ public class FingerprintDialog extends DialogFragment implements FingerprintHand
 
     private String authReason;
     private ReadableMap authConfig;
+    private View shakyView;
+    private Animation shakyAnim;
 
+    private Context context;
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+        this.context = context;
 
         mFingerprintHandler = new FingerprintHandler(context, this);
     }
@@ -44,12 +53,15 @@ public class FingerprintDialog extends DialogFragment implements FingerprintHand
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final View v = inflater.inflate(R.layout.fingerprint_dialog, container, false);
 
+        this.shakyAnim = AnimationUtils.loadAnimation(context, R.anim.shake);
+
         final TextView mFingerprintDescription = (TextView) v.findViewById(R.id.fingerprint_description);
         mFingerprintDescription.setText(authReason);
 
         final int color = authConfig.getInt("color");
         final ImageView mFingerprintImage = (ImageView) v.findViewById(R.id.fingerprint_icon);
         mFingerprintImage.setColorFilter(color);
+        this.shakyView = mFingerprintImage;
 
         final Button mCancelButton = (Button) v.findViewById(R.id.cancel_button);
         mCancelButton.setTextColor(color);
@@ -114,7 +126,7 @@ public class FingerprintDialog extends DialogFragment implements FingerprintHand
     public interface DialogResultListener {
         void onAuthenticated();
 
-        void onError(String errorString);
+        void onError(int errorCode, String errorString);
 
         void onCancelled();
     }
@@ -122,15 +134,23 @@ public class FingerprintDialog extends DialogFragment implements FingerprintHand
     @Override
     public void onAuthenticated() {
         isAuthInProgress = false;
+        mFingerprintHandler.endAuth();
         dialogCallback.onAuthenticated();
         dismiss();
     }
 
     @Override
-    public void onError(String errorString) {
+    public void onError(int errorCode, String errorString) {
         isAuthInProgress = false;
-        dialogCallback.onError(errorString);
+        mFingerprintHandler.endAuth();
+
+        dialogCallback.onError(errorCode, errorString);
         dismiss();
+    }
+
+    @Override
+    public void onFailed() {
+        this.shakyView.startAnimation(this.shakyAnim);
     }
 
     @Override

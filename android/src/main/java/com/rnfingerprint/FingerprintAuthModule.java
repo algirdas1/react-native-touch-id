@@ -14,10 +14,15 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.annotation.Nullable;
 import javax.crypto.Cipher;
 
 public class FingerprintAuthModule extends ReactContextBaseJavaModule implements LifecycleEventListener {
 
+    public static final int FINGERPRINT_CANCELLED_BY_USER = 101;
     private static final String FRAGMENT_TAG = "fingerprint_dialog";
 
     private FingerprintManager.CryptoObject cryptoObject;
@@ -26,6 +31,8 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
     private boolean isAppActive;
 
     public static boolean inProgress = false;
+
+
 
     public FingerprintAuthModule(final ReactApplicationContext reactContext) {
         super(reactContext);
@@ -78,6 +85,22 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
     public String getName() {
         return "FingerprintAuth";
     }
+
+    @Nullable
+    @Override
+    public Map<String, Object> getConstants() {
+
+        final Map<String, Object> constants = new HashMap<>();
+        constants.put("FINGERPRINT_ERROR_HW_UNAVAILABLE", FingerprintManager.FINGERPRINT_ERROR_HW_UNAVAILABLE);
+        constants.put("FINGERPRINT_ERROR_UNABLE_TO_PROCESS", FingerprintManager.FINGERPRINT_ERROR_UNABLE_TO_PROCESS);
+        constants.put("FINGERPRINT_ERROR_TIMEOUT", FingerprintManager.FINGERPRINT_ERROR_TIMEOUT);
+        constants.put("FINGERPRINT_ERROR_NO_SPACE", FingerprintManager.FINGERPRINT_ERROR_NO_SPACE);
+        constants.put("FINGERPRINT_ERROR_CANCELED", FingerprintManager.FINGERPRINT_ERROR_CANCELED);
+        constants.put("FINGERPRINT_ERROR_LOCKOUT", FingerprintManager.FINGERPRINT_ERROR_LOCKOUT);
+
+        return constants;
+    }
+
 
     @ReactMethod
     public void isSupported(final Callback reactErrorCallback, final Callback reactSuccessCallback) {

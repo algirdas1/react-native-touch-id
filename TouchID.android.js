@@ -17,7 +17,7 @@ export default {
   },
 
   authenticate(reason, config) {
-    var DEFAULT_CONFIG = { title: 'Authentication Required', color: '#1306ff' };
+    DEFAULT_CONFIG = { title: 'Authentication Required', color: '#0264a6' };
     var authReason = reason ? reason : ' ';
     var authConfig = Object.assign({}, DEFAULT_CONFIG, config);
     var color = processColor(authConfig.color);
@@ -28,8 +28,9 @@ export default {
       NativeTouchID.authenticate(
         authReason,
         authConfig,
-        error => {
-          return reject(typeof error == 'String' ? createError(error, error) : createError(error));
+        (errorCode, errorMessage) => {
+          console.log('error', errorCode, errorMessage);
+          return reject(typeof error == 'String' ? createError(errorMessage, errorMessage) : createError(errorMessage));
         },
         success => {
           return resolve(true);

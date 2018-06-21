@@ -2,6 +2,9 @@ package com.rnfingerprint;
 
 import com.facebook.react.bridge.Callback;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class DialogResultHandler implements FingerprintDialog.DialogResultListener {
     private Callback errorCallback;
     private Callback successCallback;
@@ -17,13 +20,14 @@ public class DialogResultHandler implements FingerprintDialog.DialogResultListen
       successCallback.invoke("Successfully authenticated.");
     }
     @Override
-    public void onError(String errorString) {
+    public void onError(int errorCode, String errorString) {
       FingerprintAuthModule.inProgress = false;
-      errorCallback.invoke(errorString);
+      errorCallback.invoke(errorCode, errorString);
     }
+
     @Override
     public void onCancelled() {
       FingerprintAuthModule.inProgress = false;
-      errorCallback.invoke("cancelled");
+        errorCallback.invoke(FingerprintAuthModule.FINGERPRINT_CANCELLED_BY_USER, "cancelled");
     }
 }
