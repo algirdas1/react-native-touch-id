@@ -57,6 +57,9 @@ public class FingerprintDialog extends DialogFragment implements FingerprintHand
 
         final TextView mFingerprintDescription = (TextView) v.findViewById(R.id.fingerprint_description);
         mFingerprintDescription.setText(authReason);
+        if (authReason == null) {
+            mFingerprintDescription.setVisibility(View.GONE);
+        }
 
         final int color = authConfig.getInt("color");
         final ImageView mFingerprintImage = (ImageView) v.findViewById(R.id.fingerprint_icon);

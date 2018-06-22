@@ -97,6 +97,7 @@ public class FingerprintAuthModule extends ReactContextBaseJavaModule implements
         constants.put("FINGERPRINT_ERROR_NO_SPACE", FingerprintManager.FINGERPRINT_ERROR_NO_SPACE);
         constants.put("FINGERPRINT_ERROR_CANCELED", FingerprintManager.FINGERPRINT_ERROR_CANCELED);
         constants.put("FINGERPRINT_ERROR_LOCKOUT", FingerprintManager.FINGERPRINT_ERROR_LOCKOUT);
+        constants.put("FINGERPRINT_CANCELLED_BY_USER", FINGERPRINT_CANCELLED_BY_USER);
 
         return constants;
     }
